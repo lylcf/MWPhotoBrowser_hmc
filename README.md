@@ -7,6 +7,10 @@
 
 [![Flattr this git repo](http://api.flattr.com/button/flattr-badge-large.png)](https://flattr.com/submit/auto?user_id=mwaterfall&url=https://github.com/mwaterfall/MWPhotoBrowser&title=MWPhotoBrowser&language=&tags=github&category=software)
 
+## MBProgressHUD 1.1.0，DACircularProgress 2.3.1，SDWebImage 4.2.2:
+
+```pod "MWPhotoBrowser", :podspec =>'https://raw.githubusercontent.com/moinku07/MWPhotoBrowser/master/MWPhotoBrowser.podspec'```
+
 ## A simple iOS photo and video browser with optional grid view, captions and selections.
 
 MWPhotoBrowser can display one or more images or videos by providing either `UIImage` objects, `PHAsset` objects, or URLs to library assets, web images/videos or local files. The photo browser handles the downloading and caching of photos from the web seamlessly. Photos can be zoomed and panned, and optional (customisable) captions can be displayed.
