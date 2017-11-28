@@ -18,8 +18,6 @@
 @interface MWZoomingScrollView () {
     
     MWPhotoBrowser __weak *_photoBrowser;
-	MWTapDetectingView *_tapView; // for background taps
-	MWTapDetectingImageView *_photoImageView;
 	DACircularProgressView *_loadingIndicator;
     UIImageView *_loadingError;
     

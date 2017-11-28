@@ -59,6 +59,7 @@ static void * MWVideoPlayerObservation = &MWVideoPlayerObservation;
         _isVCBasedStatusBarAppearance = YES; // default
     }
     self.hidesBottomBarWhenPushed = YES;
+    _browserBackgroundColor = [UIColor blackColor];
     _hasBelongedToViewController = NO;
     _photoCount = NSNotFound;
     _previousLayoutBounds = CGRectZero;
@@ -144,7 +145,7 @@ static void * MWVideoPlayerObservation = &MWVideoPlayerObservation;
     if (!_enableGrid) _startOnGrid = NO;
 	
 	// View
-	self.view.backgroundColor = [UIColor blackColor];
+	self.view.backgroundColor = _browserBackgroundColor;
     self.view.clipsToBounds = YES;
 	
 	// Setup paging scrolling view
@@ -155,7 +156,7 @@ static void * MWVideoPlayerObservation = &MWVideoPlayerObservation;
 	_pagingScrollView.delegate = self;
 	_pagingScrollView.showsHorizontalScrollIndicator = NO;
 	_pagingScrollView.showsVerticalScrollIndicator = NO;
-	_pagingScrollView.backgroundColor = [UIColor blackColor];
+	_pagingScrollView.backgroundColor = _browserBackgroundColor;
     _pagingScrollView.contentSize = [self contentSizeForPagingScrollView];
 	[self.view addSubview:_pagingScrollView];
 	
@@ -166,6 +167,11 @@ static void * MWVideoPlayerObservation = &MWVideoPlayerObservation;
     [_toolbar setBackgroundImage:nil forToolbarPosition:UIToolbarPositionAny barMetrics:UIBarMetricsDefault];
     [_toolbar setBackgroundImage:nil forToolbarPosition:UIToolbarPositionAny barMetrics:UIBarMetricsLandscapePhone];
     _toolbar.barStyle = UIBarStyleBlackTranslucent;
+    if (_browserBackgroundColor != [UIColor blackColor]){
+        _toolbar.barStyle = UIBarStyleDefault;
+        _toolbar.tintColor = [UIColor blackColor];
+        _toolbar.barTintColor = [UIColor whiteColor];
+    }
     _toolbar.autoresizingMask = UIViewAutoresizingFlexibleTopMargin | UIViewAutoresizingFlexibleWidth;
     
     // Toolbar Items
@@ -345,7 +351,11 @@ static void * MWVideoPlayerObservation = &MWVideoPlayerObservation;
     // Set style
     if (!_leaveStatusBarAlone && UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPhone) {
         _previousStatusBarStyle = [[UIApplication sharedApplication] statusBarStyle];
-        [[UIApplication sharedApplication] setStatusBarStyle:UIStatusBarStyleLightContent animated:animated];
+        if(_browserBackgroundColor == [UIColor whiteColor]){
+            [[UIApplication sharedApplication] setStatusBarStyle:UIStatusBarStyleDefault animated:animated];
+        }else{
+            [[UIApplication sharedApplication] setStatusBarStyle:UIStatusBarStyleLightContent animated:animated];
+        }
     }
     
     // Navigation bar appearance
@@ -447,6 +457,11 @@ static void * MWVideoPlayerObservation = &MWVideoPlayerObservation;
     navBar.shadowImage = nil;
     navBar.translucent = YES;
     navBar.barStyle = UIBarStyleBlackTranslucent;
+    if (_browserBackgroundColor != [UIColor blackColor]){
+        navBar.barStyle = UIBarStyleDefault;
+        navBar.tintColor = [UIColor blackColor];
+        navBar.barTintColor = [UIColor whiteColor];
+    }
     [navBar setBackgroundImage:nil forBarMetrics:UIBarMetricsDefault];
     [navBar setBackgroundImage:nil forBarMetrics:UIBarMetricsLandscapePhone];
 }
@@ -896,6 +911,8 @@ static void * MWVideoPlayerObservation = &MWVideoPlayerObservation;
 }
 
 - (void)configurePage:(MWZoomingScrollView *)page forIndex:(NSUInteger)index {
+    page.tapView.backgroundColor = _browserBackgroundColor;
+    page.photoImageView.backgroundColor = _browserBackgroundColor;
 	page.frame = [self frameForPageAtIndex:index];
     page.index = index;
     page.photo = [self photoAtIndex:index];
@@ -1004,8 +1021,14 @@ static void * MWVideoPlayerObservation = &MWVideoPlayerObservation;
 
 - (CGRect)frameForToolbarAtOrientation:(UIInterfaceOrientation)orientation {
     CGFloat height = 44;
-    if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPhone &&
-        UIInterfaceOrientationIsLandscape(orientation)) height = 32;
+    
+    if( UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPhone){
+        if(MAX(UIScreen.mainScreen.bounds.size.width, UIScreen.mainScreen.bounds.size.height) == 812.0 && !UIInterfaceOrientationIsLandscape(orientation)){//iPhone X
+            height += 30;
+        }else if(UIInterfaceOrientationIsLandscape(orientation)){
+            height = 32;
+        }
+    }
 	return CGRectIntegral(CGRectMake(0, self.view.bounds.size.height - height, self.view.bounds.size.width, height));
 }
 
@@ -1504,6 +1527,9 @@ static void * MWVideoPlayerObservation = &MWVideoPlayerObservation;
 }
 
 - (UIStatusBarStyle)preferredStatusBarStyle {
+    if(_browserBackgroundColor == [UIColor whiteColor]){
+        return UIStatusBarStyleDefault;
+    }
     return UIStatusBarStyleLightContent;
 }
 
@@ -1597,29 +1623,34 @@ static void * MWVideoPlayerObservation = &MWVideoPlayerObservation;
             if (photo.caption) {
                 [items addObject:photo.caption];
             }
-            self.activityViewController = [[UIActivityViewController alloc] initWithActivityItems:items applicationActivities:nil];
             
-            // Show loading spinner after a couple of seconds
-            double delayInSeconds = 2.0;
-            dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delayInSeconds * NSEC_PER_SEC));
-            dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
-                if (self.activityViewController) {
-                    [self showProgressHUDWithMessage:nil];
-                }
-            });
-
-            // Show
-            typeof(self) __weak weakSelf = self;
-            [self.activityViewController setCompletionHandler:^(NSString *activityType, BOOL completed) {
-                weakSelf.activityViewController = nil;
-                [weakSelf hideControlsAfterDelay];
-                [weakSelf hideProgressHUD:YES];
-            }];
-            // iOS 8 - Set the Anchor Point for the popover
-            if (SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"8")) {
-                self.activityViewController.popoverPresentationController.barButtonItem = _actionButton;
+            PHAuthorizationStatus status = [PHPhotoLibrary authorizationStatus];
+            if (status == PHAuthorizationStatusAuthorized){
+                [self showActivityViewController:items];
             }
-            [self presentViewController:self.activityViewController animated:YES completion:nil];
+            else{
+                //No permission. Trying to normally request it
+                [PHPhotoLibrary requestAuthorization:^(PHAuthorizationStatus status) {
+                    if (status != PHAuthorizationStatusAuthorized){
+                        //User don't give us permission. Showing alert with redirection to settings
+                        //Getting description string from info.plist file
+                        NSString *accessDescription = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"NSPhotoLibraryUsageDescription"];
+                        UIAlertController * alertController = [UIAlertController alertControllerWithTitle:accessDescription message:@"To give permissions tap on 'Change Settings' button" preferredStyle:UIAlertControllerStyleAlert];
+                        
+                        UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:nil];
+                        [alertController addAction:cancelAction];
+                        
+                        UIAlertAction *settingsAction = [UIAlertAction actionWithTitle:@"Change Settings" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+                            [[UIApplication sharedApplication] openURL:[NSURL URLWithString:UIApplicationOpenSettingsURLString]];
+                        }];
+                        [alertController addAction:settingsAction];
+                        
+                        [[UIApplication sharedApplication].keyWindow.rootViewController presentViewController:alertController animated:YES completion:nil];
+                    }else{
+                        [self showActivityViewController:items];
+                    }
+                }];
+            }
 
         }
         
@@ -1628,6 +1659,34 @@ static void * MWVideoPlayerObservation = &MWVideoPlayerObservation;
 
     }
     
+}
+
+-(void)showActivityViewController:(id)items{
+    self.activityViewController = [[UIActivityViewController alloc] initWithActivityItems:items applicationActivities:nil];
+    
+    // Show loading spinner after a couple of seconds
+    double delayInSeconds = 2.0;
+    dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delayInSeconds * NSEC_PER_SEC));
+    dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
+        if (self.activityViewController) {
+            [self showProgressHUDWithMessage:nil];
+        }
+    });
+    
+    // Show
+    typeof(self) __weak weakSelf = self;
+    self.activityViewController.completionWithItemsHandler = ^(NSString *activityType, BOOL completed, NSArray *returnedItems, NSError *activityError) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            weakSelf.activityViewController = nil;
+            [weakSelf hideControlsAfterDelay];
+            [weakSelf hideProgressHUD:YES];
+        });
+    };
+    // iOS 8 - Set the Anchor Point for the popover
+    if (SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"8")) {
+        self.activityViewController.popoverPresentationController.barButtonItem = _actionButton;
+    }
+    [self presentViewController:self.activityViewController animated:YES completion:nil];
 }
 
 #pragma mark - Action Progress

@@ -22,6 +22,8 @@
 @property (nonatomic, weak) MWCaptionView *captionView;
 @property (nonatomic, weak) UIButton *selectedButton;
 @property (nonatomic, weak) UIButton *playButton;
+@property (nonatomic) MWTapDetectingView *tapView;
+@property (nonatomic) MWTapDetectingImageView *photoImageView;
 
 - (id)initWithPhotoBrowser:(MWPhotoBrowser *)browser;
 - (void)displayImage;
