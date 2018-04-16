@@ -3,7 +3,7 @@ Pod::Spec.new do |s|
   s.name = 'MWPhotoBrowser_hmc'
   s.version = '2.1.4'
   s.license = 'MIT'
-  s.summary = '更新了 SDWebImage 和 MBProgressHUD'
+  s.summary = 'MWPhotoBrowser Update SDWebImage And MBProgressHUD'
   s.description = <<-DESCRIPTION
                   MWPhotoBrowser can display one or more images or videos by providing either UIImage
                   objects, PHAsset objects, or URLs to library assets, web images/videos or local files.
@@ -27,7 +27,7 @@ Pod::Spec.new do |s|
     :git => 'https://github.com/lylcf/MWPhotoBrowser_hmc.git',
     :tag => '2.1.4'
   }
-  s.platform = :ios, '7.0'
+  s.platform = :ios, '8.0'
   s.source_files = 'Pod/Classes/**/*'
   s.resource_bundles = {
     'MWPhotoBrowser' => ['Pod/Assets/*.png']
