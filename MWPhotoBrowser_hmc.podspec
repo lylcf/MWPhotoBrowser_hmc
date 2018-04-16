@@ -1,7 +1,7 @@
 Pod::Spec.new do |s|
 
   s.name = 'MWPhotoBrowser_hmc'
-  s.version = '2.1.4'
+  s.version = '2.1.5'
   s.license = 'MIT'
   s.summary = 'MWPhotoBrowser Update SDWebImage And MBProgressHUD'
   s.description = <<-DESCRIPTION
